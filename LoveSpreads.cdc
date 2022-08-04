@@ -19,6 +19,7 @@ pub contract LoveSpreads: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
+    pub event Minted(id: UInt64, by: Address, name: String, description: String, thumbnail: String)
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
@@ -72,7 +73,7 @@ pub contract LoveSpreads: NonFungibleToken {
         }
 
         pub fun getTemplate(): Template {
-          return LoveSpreads.getTemplate(id: self.sequentialId)
+          return LoveSpreads.getTemplate(id: self.id)
         }
 
         init() {
@@ -169,7 +170,10 @@ pub contract LoveSpreads: NonFungibleToken {
     //
     pub resource Administrator {
       pub fun mintNFT(recipient: &Collection{NonFungibleToken.Receiver}) {
-        recipient.deposit(token: <- create NFT())
+        let nft <- create  NFT()
+        let nftTemplate = nft.getTemplate()
+        emit Minted(id: nft.id, by: self.owner!.address, name: nftTemplate.name, description: nftTemplate.description, thumbnail: nftTemplate.thumbnail)
+        recipient.deposit(token: <- nft)
       }
 
       pub fun addNewTemplate(id: UInt64, name: String, description: String, thumbnail: String, metadata: {String: AnyStruct}) {
