@@ -10,3 +10,4 @@ The account with the `Administrator` resource would use the `transactions/addNew
 
 ## Events
 
+There is a `Minted` event in the contract you can track to see when an NFT is initially minted. It looks like this: `pub event Minted(id: UInt64, by: Address, name: String, description: String, thumbnail: String)`
