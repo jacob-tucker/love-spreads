@@ -2,9 +2,9 @@ import LoveSpreads from "../LoveSpreads.cdc"
 import NonFungibleToken from "../utility/NonFungibleToken.cdc"
 
 transaction(id: UInt64, name: String, description: String, thumbnail: String, metadata: {String: AnyStruct}) {
-  let Minter: &LoveSpreads.NFTMinter
+  let Minter: &LoveSpreads.Administrator
   prepare(signer: AuthAccount) {
-    self.Minter = signer.borrow<&LoveSpreads.NFTMinter>(from: LoveSpreads.MinterStoragePath)
+    self.Minter = signer.borrow<&LoveSpreads.Administrator>(from: LoveSpreads.MinterStoragePath)
                     ?? panic("This is not the Minter account.")
   }
 

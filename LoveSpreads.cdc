@@ -48,6 +48,7 @@ pub contract LoveSpreads: NonFungibleToken {
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
+        pub let sequentialId: UInt64
     
         pub fun getViews(): [Type] {
           return [
@@ -71,11 +72,12 @@ pub contract LoveSpreads: NonFungibleToken {
         }
 
         pub fun getTemplate(): Template {
-          return LoveSpreads.getTemplate(id: self.id)
+          return LoveSpreads.getTemplate(id: self.sequentialId)
         }
 
         init() {
           self.id = self.uuid
+          self.sequentialId = LoveSpreads.totalSupply
           LoveSpreads.totalSupply = LoveSpreads.totalSupply + 1
         }
     }
@@ -165,7 +167,7 @@ pub contract LoveSpreads: NonFungibleToken {
     // Resource that an admin or something similar would own to be
     // able to mint new NFTs
     //
-    pub resource NFTMinter {
+    pub resource Administrator {
       pub fun mintNFT(recipient: &Collection{NonFungibleToken.Receiver}) {
         recipient.deposit(token: <- create NFT())
       }
@@ -204,7 +206,7 @@ pub contract LoveSpreads: NonFungibleToken {
         self.MinterStoragePath = /storage/LoveSpreadsMinter
 
         // Create a Minter resource and save it to storage
-        let minter <- create NFTMinter()
+        let minter <- create Administrator()
         self.account.save(<-minter, to: self.MinterStoragePath)
 
         emit ContractInitialized()

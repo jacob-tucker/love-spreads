@@ -2,10 +2,10 @@ import LoveSpreads from "../LoveSpreads.cdc"
 import NonFungibleToken from "../utility/NonFungibleToken.cdc"
 
 transaction(recipient: Address, amount: Int) {
-  let Minter: &LoveSpreads.NFTMinter
+  let Minter: &LoveSpreads.Administrator
   let Recipient: &LoveSpreads.Collection{NonFungibleToken.Receiver}
   prepare(signer: AuthAccount) {
-    self.Minter = signer.borrow<&LoveSpreads.NFTMinter>(from: LoveSpreads.MinterStoragePath)
+    self.Minter = signer.borrow<&LoveSpreads.Administrator>(from: LoveSpreads.MinterStoragePath)
                     ?? panic("This is not the Minter account.")
   
     self.Recipient = getAccount(recipient).getCapability(LoveSpreads.CollectionPublicPath)
