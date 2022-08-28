@@ -19,7 +19,7 @@ transaction {
         signer.save(<-collection, to: LoveSpreads.CollectionStoragePath)
 
         // create a public capability for the collection
-        signer.link<&{NonFungibleToken.CollectionPublic, LoveSpreads.CollectionPublic, MetadataViews.ResolverCollection}>(
+        signer.link<&LoveSpreads.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, LoveSpreads.CollectionPublic, MetadataViews.ResolverCollection}>(
             LoveSpreads.CollectionPublicPath,
             target: LoveSpreads.CollectionStoragePath
         )
