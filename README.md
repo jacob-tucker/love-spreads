@@ -1,12 +1,15 @@
 # Love Spreads
 
-## "What is a Template?"
+## Steps to Mint
 
-A Template is basically a container for NFT Metadata. It contains a `name`, `description`, `thumbnail` (image hash), and `metadata` dictionary. Each NFT points to a Template for its metadata, and you can update this pointer at any time using the method below.
+1. `flow emulator start`
+2. `flow project deploy`
+3. `flow transactions send ./transactions/setupAccount.cdc`
+4. `flow transactions send ./transactions/mintNFT.cdc 0xf8d6e0586b0a20c7 "Example Name" "Example Description" "Random CID" {}`
 
 ## How to Update Metadata
 
-The account with the `Administrator` resource would use the `transactions/addNewTemplate.cdc` transaction to do this. You pass in the NFT's id (that you would get from Rarible events or something like that), and pass in a new name, description, thumbnail, and metadata dictionary. This will automatically point the NFT with the specific id to that new metadata.
+The account with the `Administrator` resource would use the `transactions/updateNFTMetadata.cdc` transaction to do this. You pass in the NFT's id (that you would get from Rarible events or something like that) as well as the current owner of the NFT, and pass in a new name, description, thumbnail, and metadata dictionary. This will automatically update the NFT owned by the current owner with the specific id to that new metadata.
 
 ## Events
 
