@@ -25,10 +25,7 @@ pub contract LoveSpreads: NonFungibleToken {
     pub let CollectionPublicPath: PublicPath
     pub let MinterStoragePath: StoragePath
 
-    // Maps an NFT's sequential `id` to a series of Templates
-    access(self) var evolutions: {UInt64: [Template]}
-
-    pub struct Template {
+    pub struct NFTMetadata {
       pub let name: String
       pub let description: String
       pub let thumbnail: String
@@ -49,7 +46,8 @@ pub contract LoveSpreads: NonFungibleToken {
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
-        pub let sequentialId: UInt64
+        pub let sequence: UInt64
+        pub var metadata: NFTMetadata
     
         pub fun getViews(): [Type] {
           return [
@@ -58,7 +56,7 @@ pub contract LoveSpreads: NonFungibleToken {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-          let template = self.getTemplate()
+          let template = self.getMetadata()
           switch view {
             case Type<MetadataViews.Display>():
               return MetadataViews.Display(
@@ -72,13 +70,18 @@ pub contract LoveSpreads: NonFungibleToken {
           return nil
         }
 
-        pub fun getTemplate(): Template {
-          return LoveSpreads.getTemplate(id: self.id)
+        pub fun getMetadata(): NFTMetadata {
+          return self.metadata
         }
 
-        init() {
+        access(contract) fun updateMetadata(newMetadata: NFTMetadata) {
+          self.metadata = newMetadata
+        }
+
+        init(metadata: NFTMetadata) {
           self.id = self.uuid
-          self.sequentialId = LoveSpreads.totalSupply
+          self.sequence = LoveSpreads.totalSupply
+          self.metadata = metadata
           LoveSpreads.totalSupply = LoveSpreads.totalSupply + 1
         }
     }
@@ -169,40 +172,39 @@ pub contract LoveSpreads: NonFungibleToken {
     // able to mint new NFTs
     //
     pub resource Administrator {
-      pub fun mintNFT(recipient: &Collection{NonFungibleToken.Receiver}) {
-        let nft <- create  NFT()
-        let nftTemplate = nft.getTemplate()
-        emit Minted(id: nft.id, by: self.owner!.address, name: nftTemplate.name, description: nftTemplate.description, thumbnail: nftTemplate.thumbnail)
+      pub fun mintNFT(
+        recipient: &Collection{NonFungibleToken.Receiver}, 
+        name: String, 
+        description: String, 
+        thumbnail: String, 
+        metadata: {String: AnyStruct}
+      ) {
+        let nft <- create NFT(metadata: NFTMetadata(name: name, description: description, thumbnail: thumbnail, metadata: metadata))
+        emit Minted(id: nft.id, by: self.owner!.address, name: name, description: description, thumbnail: thumbnail)
         recipient.deposit(token: <- nft)
       }
 
-      pub fun addNewTemplate(id: UInt64, name: String, description: String, thumbnail: String, metadata: {String: AnyStruct}) {
-        let newTemplate = Template(name: name, description: description, thumbnail: thumbnail, metadata: metadata)
-        
-        if LoveSpreads.evolutions[id] == nil {
-          LoveSpreads.evolutions[id] = []
-        }
-        LoveSpreads.evolutions[id]!.append(newTemplate)
+      pub fun updateMetadata(
+        id: UInt64, 
+        currentOwner: Address, 
+        name: String, 
+        description: String, 
+        thumbnail: String, 
+        metadata: {String: AnyStruct}
+      ) {
+        let newMetadata = NFTMetadata(name: name, description: description, thumbnail: thumbnail, metadata: metadata)
+
+        let ownerCollection = getAccount(currentOwner).getCapability(LoveSpreads.CollectionPublicPath)
+                                .borrow<&Collection{CollectionPublic}>()
+                                ?? panic("This person does not have a LoveSpreads Collection set up properly.")
+        let nftRef = ownerCollection.borrowAuthNFT(id: id) ?? panic("This account does not own an NFT with this id.")
+        nftRef.updateMetadata(newMetadata: newMetadata)
       }
-
-      pub fun removeLastTemplate(id: UInt64) {
-        LoveSpreads.evolutions[id]!.removeLast()
-      }
-    }
-
-    pub fun getTemplate(id: UInt64): Template {
-      let evolutions: [Template] = self.evolutions[id] ?? panic("An NFT with this id does not exist.")
-      return evolutions[evolutions.length - 1]
-    }
-
-    pub fun getEvolutions(): {UInt64: [Template]} {
-      return self.evolutions
     }
 
     init() {
         // Initialize the total supply
         self.totalSupply = 0
-        self.evolutions = {}
 
         // Set the named paths
         self.CollectionStoragePath = /storage/LoveSpreadsCollection
